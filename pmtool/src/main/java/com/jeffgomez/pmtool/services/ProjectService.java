@@ -1,7 +1,8 @@
 package com.jeffgomez.pmtool.services;
 
 import com.jeffgomez.pmtool.domain.Project;
-import com.jeffgomez.pmtool.repositories.ProjectRepositories;
+import com.jeffgomez.pmtool.exceptions.ProjectIdException;
+import com.jeffgomez.pmtool.repositories.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,11 +10,44 @@ import org.springframework.stereotype.Service;
 public class ProjectService {
 
     @Autowired
-    private ProjectRepositories projectRepositories;
+    private ProjectRepository projectRepository;
 
     public Project saveOrUpdateProject(Project project){
-        //logic
+        try{
+            project.setProjectIdentifier(project.getProjectIdentifier().toUpperCase());
+            return projectRepository.save(project);
+        }catch (Exception e){
+            throw new ProjectIdException("Project ID '"+project.getProjectIdentifier().toUpperCase()+"' already exists");
+        }
 
-        return projectRepositories.save(project);
+    }
+
+
+    public Project findProjectByIdentifier(String projectId){
+
+        Project project = projectRepository.findByProjectIdentifier(projectId.toUpperCase());
+
+        if(project == null){
+            throw new ProjectIdException("Project ID '"+projectId+"' does not exist");
+
+        }
+
+
+        return project;
+    }
+
+    public Iterable<Project> findAllProjects(){
+        return projectRepository.findAll();
+    }
+
+
+    public void deleteProjectByIdentifier(String projectid){
+        Project project = projectRepository.findByProjectIdentifier(projectid.toUpperCase());
+
+        if(project == null){
+            throw  new  ProjectIdException("Cannot Project with ID '"+projectid+"'. This project does not exist");
+        }
+
+        projectRepository.delete(project);
     }
 }
